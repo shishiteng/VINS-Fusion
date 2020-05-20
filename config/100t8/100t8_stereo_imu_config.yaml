@@ -17,25 +17,25 @@ image_height: 480
    
 
 # Extrinsic parameter between IMU and Camera.
-estimate_extrinsic: 1   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
+estimate_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
                         # 1  Have an initial guess about extrinsic parameters. We will optimize around your initial guess.
 
 body_T_cam0: !!opencv-matrix
    rows: 4
    cols: 4
    dt: d
-   data: [0.9999232462922092, 0.009176577237528441, 0.008324178917680015, 0.0063029705939549015,
-          0.009301363647216144, -0.9998430556225641, -0.015078088659918637, 0.003775346489805412,
-          0.00818450723942007, 0.015154357575885423, -0.9998516686427594, -0.051710693448668715,
+   data: [0.99992325,  0.00930136,  0.00818451, -0.00591438,
+          0.00917658, -0.99984306,  0.01515436,  0.00450056,
+          0.00832418, -0.01507809, -0.99985167, -0.05169857,
           0, 0, 0, 1]
 
 body_T_cam1: !!opencv-matrix
    rows: 4
    cols: 4
    dt: d
-   data: [0.9998161051093309, 0.0034400076120077137, 0.018865903414265636, -0.06231960953335559,
-          0.0037758177147569714, -0.9998345588607583, -0.017793203991912525, 0.004562648658253938,
-          0.018801573460537773, 0.01786116612492626, -0.9996636832355498, -0.05212319084461692,
+   data: [0.99981611,  0.00377582,  0.01880157,  0.06327092,
+          0.00344001, -0.99983456,  0.01786117,  0.00570725,
+          0.0188659,  -0.0177932,  -0.99966368, -0.05084876,
           0, 0, 0, 1]
 
 #Multiple thread support

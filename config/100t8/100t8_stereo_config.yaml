@@ -24,38 +24,38 @@ body_T_cam0: !!opencv-matrix
    rows: 4
    cols: 4
    dt: d
-   data: [0.9999232462922092, 0.009176577237528441, 0.008324178917680015, 0.0063029705939549015,
-          0.009301363647216144, -0.9998430556225641, -0.015078088659918637, 0.003775346489805412,
-          0.00818450723942007, 0.015154357575885423, -0.9998516686427594, -0.051710693448668715,
+   data: [1, 0, 0, 0,
+          0, 1, 0, 0,
+          0, 0, 1, 0,
           0, 0, 0, 1]
 
 body_T_cam1: !!opencv-matrix
    rows: 4
    cols: 4
    dt: d
-   data: [0.9998161051093309, 0.0034400076120077137, 0.018865903414265636, -0.06231960953335559,
-          0.0037758177147569714, -0.9998345588607583, -0.017793203991912525, 0.004562648658253938,
-          0.018801573460537773, 0.01786116612492626, -0.9996636832355498, -0.05212319084461692,
-          0, 0, 0, 1]
+   data: [ 0.99992798, -0.00557572,  0.01062797,  0.07,
+           0.00554764,  0.99998105, -0.00266962,  0,
+          -0.01064266,  0.00261046,  0.99993996,  0,
+           0, 0, 0, 1]
 
 #Multiple thread support
 multiple_thread: 1
 
 #feature traker paprameters
-max_cnt: 150            # max feature number in feature tracking
+max_cnt: 200            # max feature number in feature tracking
 min_dist: 30            # min distance between two features 
 freq: 10                # frequence (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequence will be same as raw image 
-F_threshold: 1.0        # ransac threshold (pixel)
+F_threshold: 0.0        # ransac threshold (pixel)
 show_track: 1           # publish tracking image as topic
 flow_back: 1            # perform forward and backward optical flow to improve feature tracking accuracy
 
 #optimization parameters
-max_solver_time: 0.04  # max solver itration time (ms), to guarantee real time
+max_solver_time: 0.1  # max solver itration time (ms), to guarantee real time
 max_num_iterations: 8   # max solver itrations, to guarantee real time
 keyframe_parallax: 10.0 # keyframe selection threshold (pixel)
 
 #imu parameters       The more accurate parameters you provide, the better performance
-acc_n: 0.08           # accelerometer measurement noise standard deviation. 
+acc_n: 0.04           # accelerometer measurement noise standard deviation. 
 gyr_n: 0.0013         # gyroscope measurement noise standard deviation.     
 acc_w: 0.005          # accelerometer bias random work noise standard deviation.  
 gyr_w: 0.00006        # gyroscope bias random work noise standard deviation.     
