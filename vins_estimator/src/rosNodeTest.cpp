@@ -29,7 +29,6 @@ queue<sensor_msgs::ImageConstPtr> img0_buf;
 queue<sensor_msgs::ImageConstPtr> img1_buf;
 std::mutex m_buf;
 
-
 void img0_callback(const sensor_msgs::ImageConstPtr &img_msg)
 {
     m_buf.lock();
@@ -43,7 +42,6 @@ void img1_callback(const sensor_msgs::ImageConstPtr &img_msg)
     img1_buf.push(img_msg);
     m_buf.unlock();
 }
-
 
 cv::Mat getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg)
 {
@@ -67,12 +65,18 @@ cv::Mat getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg)
     return img;
 }
 
+cv::Mat getDepthImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg)
+{
+    cv_bridge::CvImageConstPtr ptr = cv_bridge::toCvCopy(img_msg);
+    return ptr->image.clone();
+}
+
 // extract images with same timestamp from two topics
 void sync_process()
 {
-    while(1)
+    while (1)
     {
-        if(STEREO)
+        if (STEREO || DEPTH)
         {
             cv::Mat image0, image1;
             std_msgs::Header header;
@@ -83,12 +87,12 @@ void sync_process()
                 double time0 = img0_buf.front()->header.stamp.toSec();
                 double time1 = img1_buf.front()->header.stamp.toSec();
                 // 0.003s sync tolerance
-                if(time0 < time1 - 0.003)
+                if (time0 < time1 - 0.003)
                 {
                     img0_buf.pop();
                     printf("throw img0\n");
                 }
-                else if(time0 > time1 + 0.003)
+                else if (time0 > time1 + 0.003)
                 {
                     img1_buf.pop();
                     printf("throw img1\n");
@@ -99,13 +103,16 @@ void sync_process()
                     header = img0_buf.front()->header;
                     image0 = getImageFromMsg(img0_buf.front());
                     img0_buf.pop();
-                    image1 = getImageFromMsg(img1_buf.front());
+                    if (DEPTH)
+                        image1 = getDepthImageFromMsg(img1_buf.front());
+                    else
+                        image1 = getImageFromMsg(img1_buf.front());
                     img1_buf.pop();
                     //printf("find img0 and img1\n");
                 }
             }
             m_buf.unlock();
-            if(!image0.empty())
+            if (!image0.empty())
                 estimator.inputImage(time, image0, image1);
         }
         else
@@ -114,7 +121,7 @@ void sync_process()
             std_msgs::Header header;
             double time = 0;
             m_buf.lock();
-            if(!img0_buf.empty())
+            if (!img0_buf.empty())
             {
                 time = img0_buf.front()->header.stamp.toSec();
                 header = img0_buf.front()->header;
@@ -122,7 +129,7 @@ void sync_process()
                 img0_buf.pop();
             }
             m_buf.unlock();
-            if(!image.empty())
+            if (!image.empty())
                 estimator.inputImage(time, image);
         }
 
@@ -130,7 +137,6 @@ void sync_process()
         std::this_thread::sleep_for(dura);
     }
 }
-
 
 void imu_callback(const sensor_msgs::ImuConstPtr &imu_msg)
 {
@@ -147,10 +153,9 @@ void imu_callback(const sensor_msgs::ImuConstPtr &imu_msg)
     return;
 }
 
-
 void feature_callback(const sensor_msgs::PointCloudConstPtr &feature_msg)
 {
-    map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> featureFrame;
+    map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> featureFrame;
     for (unsigned int i = 0; i < feature_msg->points.size(); i++)
     {
         int feature_id = feature_msg->channels[0].values[i];
@@ -162,7 +167,7 @@ void feature_callback(const sensor_msgs::PointCloudConstPtr &feature_msg)
         double p_v = feature_msg->channels[3].values[i];
         double velocity_x = feature_msg->channels[4].values[i];
         double velocity_y = feature_msg->channels[5].values[i];
-        if(feature_msg->channels.size() > 5)
+        if (feature_msg->channels.size() > 5)
         {
             double gx = feature_msg->channels[6].values[i];
             double gy = feature_msg->channels[7].values[i];
@@ -171,9 +176,9 @@ void feature_callback(const sensor_msgs::PointCloudConstPtr &feature_msg)
             //printf("receive pts gt %d %f %f %f\n", feature_id, gx, gy, gz);
         }
         ROS_ASSERT(z == 1);
-        Eigen::Matrix<double, 7, 1> xyz_uv_velocity;
+        Eigen::Matrix<double, 8, 1> xyz_uv_velocity;
         xyz_uv_velocity << x, y, z, p_u, p_v, velocity_x, velocity_y;
-        featureFrame[feature_id].emplace_back(camera_id,  xyz_uv_velocity);
+        featureFrame[feature_id].emplace_back(camera_id, xyz_uv_velocity);
     }
     double t = feature_msg->header.stamp.toSec();
     estimator.inputFeature(t, featureFrame);
@@ -227,7 +232,7 @@ int main(int argc, char **argv)
     ros::NodeHandle n("~");
     ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info);
 
-    if(argc != 2)
+    if (argc != 2)
     {
         printf("please intput: rosrun vins vins_node [config file] \n"
                "for example: rosrun vins vins_node "

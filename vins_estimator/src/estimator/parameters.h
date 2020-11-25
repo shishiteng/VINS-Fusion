@@ -50,6 +50,7 @@ extern int ROLLING_SHUTTER;
 extern int ROW, COL;
 extern int NUM_OF_CAM;
 extern int STEREO;
+extern int DEPTH;
 extern int USE_IMU;
 extern int MULTIPLE_THREAD;
 // pts_gt for debug purpose;

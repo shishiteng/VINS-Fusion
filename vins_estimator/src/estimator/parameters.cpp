@@ -34,6 +34,7 @@ int ROW, COL;
 double TD;
 int NUM_OF_CAM;
 int STEREO;
+int DEPTH;
 int USE_IMU;
 int MULTIPLE_THREAD;
 map<int, Eigen::Vector3d> pts_gt;
@@ -88,6 +89,8 @@ void readParameters(std::string config_file)
     FLOW_BACK = fsSettings["flow_back"];
 
     MULTIPLE_THREAD = fsSettings["multiple_thread"];
+
+    DEPTH = fsSettings["depth"];
 
     USE_IMU = fsSettings["imu"];
     printf("USE_IMU: %d\n", USE_IMU);

@@ -37,7 +37,7 @@ class FeatureTracker
 {
 public:
     FeatureTracker();
-    map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> trackImage(double _cur_time, const cv::Mat &_img, const cv::Mat &_img1 = cv::Mat());
+    map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> trackImage(double _cur_time, const cv::Mat &_img, const cv::Mat &_img1 = cv::Mat());
     void setMask();
     void readIntrinsicParameter(const vector<string> &calib_file);
     void showUndistortion(const string &name);
@@ -70,6 +70,7 @@ public:
     vector<cv::Point2f> prev_pts, cur_pts, cur_right_pts;
     vector<cv::Point2f> prev_un_pts, cur_un_pts, cur_un_right_pts;
     vector<cv::Point2f> pts_velocity, right_pts_velocity;
+    vector<float> pts_depth;
     vector<int> ids, ids_right;
     vector<int> track_cnt;
     map<int, cv::Point2f> cur_un_pts_map, prev_un_pts_map;
