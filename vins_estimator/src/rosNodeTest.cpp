@@ -68,7 +68,12 @@ cv::Mat getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg)
 cv::Mat getDepthImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg)
 {
     cv_bridge::CvImageConstPtr ptr = cv_bridge::toCvCopy(img_msg);
-    return ptr->image.clone();
+
+    cv::Mat depth_img = ptr->image;
+    if (depth_img.type() != CV_32F)
+        depth_img.convertTo(depth_img, CV_32F, 1.0);
+
+    return depth_img.clone();
 }
 
 // extract images with same timestamp from two topics
@@ -87,12 +92,12 @@ void sync_process()
                 double time0 = img0_buf.front()->header.stamp.toSec();
                 double time1 = img1_buf.front()->header.stamp.toSec();
                 // 0.003s sync tolerance
-                if (time0 < time1 - 0.003)
+                if (time0 < time1 - 0.01)
                 {
                     img0_buf.pop();
                     printf("throw img0\n");
                 }
-                else if (time0 > time1 + 0.003)
+                else if (time0 > time1 + 0.01)
                 {
                     img1_buf.pop();
                     printf("throw img1\n");

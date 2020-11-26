@@ -539,6 +539,8 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
         TicToc t_solve;
         if (!USE_IMU)
             f_manager.initFramePoseByPnP(frame_count, Ps, Rs, tic, ric);
+        if (DEPTH)
+            f_manager.triangulateWithDepth(Ps, Rs, tic, ric);
         f_manager.triangulate(frame_count, Ps, Rs, tic, ric);
         optimization();
         set<int> removeIndex;
@@ -1061,6 +1063,7 @@ void Estimator::optimization()
         }
     }
 
+    int n_const = 0;
     int f_m_cnt = 0;
     int feature_index = -1;
     for (auto &it_per_id : f_manager.feature)
@@ -1084,9 +1087,9 @@ void Estimator::optimization()
                 ProjectionTwoFrameOneCamFactor *f_td = new ProjectionTwoFrameOneCamFactor(pts_i, pts_j, it_per_id.feature_per_frame[0].velocity, it_per_frame.velocity,
                                                                                           it_per_id.feature_per_frame[0].cur_td, it_per_frame.cur_td);
                 problem.AddResidualBlock(f_td, loss_function, para_Pose[imu_i], para_Pose[imu_j], para_Ex_Pose[0], para_Feature[feature_index], para_Td[0]);
-                if (it_per_id.depth_flag)
+                if (DEPTH && it_per_id.depth_flag)
                 {
-                    // n_const++;
+                    n_const++;
                     problem.SetParameterBlockConstant(para_Feature[feature_index]);
                 }
             }
@@ -1110,6 +1113,8 @@ void Estimator::optimization()
             f_m_cnt++;
         }
     }
+
+    fprintf(stderr, "measure_depth_features: %d / %d\n", n_const, f_m_cnt);
 
     ROS_DEBUG("visual measurement count: %d", f_m_cnt);
     //printf("prepare for ceres: %f \n", t_prepare.toc());

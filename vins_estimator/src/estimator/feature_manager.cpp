@@ -86,6 +86,12 @@ bool FeatureManager::addFeatureCheckParallax(int frame_count, const map<int, vec
             if (it->feature_per_frame.size() >= 4)
                 long_track_num++;
         }
+
+        // depth measured points
+        if (f_per_fra.measured_depth > 0.0)
+        {
+            it->depth_flag = 1;
+        }
     }
 
     //if (frame_count < 2 || last_track_num < 20)
@@ -296,93 +302,73 @@ void FeatureManager::initFramePoseByPnP(int frameCnt, Vector3d Ps[], Matrix3d Rs
 }
 
 void FeatureManager::triangulateWithDepth(Vector3d Ps[], Matrix3d Rs[], Vector3d tic[], Matrix3d ric[])
+// void FeatureManager::triangulateWithDepth(Vector3d Ps[], Vector3d tic[], Matrix3d ric[])
 {
     for (auto &it_per_id : feature)
     {
-        if (it_per_id.feature_per_frame.size() > 1)
-        {
-            if (!it_per_id.depth_flag)
-                continue;
-
-            int imu_i = it_per_id.start_frame;
-            Eigen::Matrix<double, 3, 4> leftPose;
-            Eigen::Vector3d t0 = Ps[imu_i] + Rs[imu_i] * tic[0];
-            Eigen::Matrix3d R0 = Rs[imu_i] * ric[0];
-            leftPose.leftCols<3>() = R0.transpose();
-            leftPose.rightCols<1>() = -R0.transpose() * t0;
-
-            imu_i++;
-            Eigen::Matrix<double, 3, 4> rightPose;
-            Eigen::Vector3d t1 = Ps[imu_i] + Rs[imu_i] * tic[0];
-            Eigen::Matrix3d R1 = Rs[imu_i] * ric[0];
-            rightPose.leftCols<3>() = R1.transpose();
-            rightPose.rightCols<1>() = -R1.transpose() * t1;
-
-            Eigen::Vector2d point0, point1;
-            Eigen::Vector3d point3d;
-            point0 = it_per_id.feature_per_frame[0].point.head(2);
-            point1 = it_per_id.feature_per_frame[1].point.head(2);
-            triangulatePoint(leftPose, rightPose, point0, point1, point3d);
-            Eigen::Vector3d localPoint;
-            localPoint = leftPose.leftCols<3>() * point3d + leftPose.rightCols<1>();
-            double depth = localPoint.z();
-            if (depth > 0)
-                it_per_id.estimated_depth = depth;
-            else
-                it_per_id.estimated_depth = INIT_DEPTH;
-            /*
-            Vector3d ptsGt = pts_gt[it_per_id.feature_id];
-            printf("motion  %d pts: %f %f %f gt: %f %f %f \n",it_per_id.feature_id, point3d.x(), point3d.y(), point3d.z(),
-                                                            ptsGt.x(), ptsGt.y(), ptsGt.z());
-            */
-            continue;
-        }
         it_per_id.used_num = it_per_id.feature_per_frame.size();
-        if (it_per_id.used_num < 4)
+        if (!(it_per_id.used_num >= 2 && it_per_id.start_frame < WINDOW_SIZE - 2))
+            continue;
+
+        if (!it_per_id.depth_flag)
             continue;
 
         int imu_i = it_per_id.start_frame, imu_j = imu_i - 1;
 
-        Eigen::MatrixXd svd_A(2 * it_per_id.feature_per_frame.size(), 4);
-        int svd_idx = 0;
+        // ！！！vins里tic代表的是camera to imu in imu frame
+        Eigen::Matrix4d P_c2i = Eigen::Matrix4d::Identity();
+        P_c2i.block<3, 3>(0, 0) = ric[0];
+        P_c2i.block<3, 1>(0, 3) = tic[0];
 
-        Eigen::Matrix<double, 3, 4> P0;
-        Eigen::Vector3d t0 = Ps[imu_i] + Rs[imu_i] * tic[0];
-        Eigen::Matrix3d R0 = Rs[imu_i] * ric[0];
-        P0.leftCols<3>() = Eigen::Matrix3d::Identity();
-        P0.rightCols<1>() = Eigen::Vector3d::Zero();
+        Eigen::Matrix4d Pi_i2w = Eigen::Matrix4d::Identity();
+        Pi_i2w.block<3, 3>(0, 0) = Rs[imu_i];
+        Pi_i2w.block<3, 1>(0, 3) = Ps[imu_i];
+
+        Eigen::Matrix4d Pi_c2w = Pi_i2w * P_c2i;
+        double sum_depth = 0;
+        int count = 0;
 
         for (auto &it_per_frame : it_per_id.feature_per_frame)
         {
             imu_j++;
 
-            Eigen::Vector3d t1 = Ps[imu_j] + Rs[imu_j] * tic[0];
-            Eigen::Matrix3d R1 = Rs[imu_j] * ric[0];
-            Eigen::Vector3d t = R0.transpose() * (t1 - t0);
-            Eigen::Matrix3d R = R0.transpose() * R1;
-            Eigen::Matrix<double, 3, 4> P;
-            P.leftCols<3>() = R.transpose();
-            P.rightCols<1>() = -R.transpose() * t;
-            Eigen::Vector3d f = it_per_frame.point.normalized();
-            svd_A.row(svd_idx++) = f[0] * P.row(2) - f[2] * P.row(0);
-            svd_A.row(svd_idx++) = f[1] * P.row(2) - f[2] * P.row(1);
-
-            if (imu_i == imu_j)
+            if (it_per_frame.measured_depth <= 0)
                 continue;
-        }
-        ROS_ASSERT(svd_idx == svd_A.rows());
-        Eigen::Vector4d svd_V = Eigen::JacobiSVD<Eigen::MatrixXd>(svd_A, Eigen::ComputeThinV).matrixV().rightCols<1>();
-        double svd_method = svd_V[2] / svd_V[3];
-        //it_per_id->estimated_depth = -b / A;
-        //it_per_id->estimated_depth = svd_V[2] / svd_V[3];
 
-        it_per_id.estimated_depth = svd_method;
-        //it_per_id->estimated_depth = INIT_DEPTH;
+            // f[2]为1的是默认的点
+            Eigen::Vector3d f = it_per_frame.point * it_per_frame.measured_depth;
+            if (imu_i == imu_j)
+            {
+                it_per_id.estimated_depth = it_per_frame.measured_depth;
+                break;
+            }
+            else
+            {
+                Eigen::Matrix4d Pj_i2w = Eigen::Matrix4d::Identity();
+                Pj_i2w.block<3, 3>(0, 0) = Rs[imu_j];
+                Pj_i2w.block<3, 1>(0, 3) = Ps[imu_j];
 
-        if (it_per_id.estimated_depth < 0.1)
-        {
-            it_per_id.estimated_depth = INIT_DEPTH;
+                Eigen::Matrix4d Pj_c2w = Pj_i2w * P_c2i;
+                Eigen::Matrix4d P_j2i = Pi_c2w.inverse() * Pj_c2w; // w2i*j2w
+                Eigen::Matrix4d P_i2j = P_j2i.inverse();
+
+                Eigen::Vector4d fj(f[0], f[1], f[2], 1.0); // features in j
+                Eigen::Vector4d fi = P_j2i * fj;           // features in i
+                Eigen::Vector2d fi_projected(fi[0] / fi[2], fi[1] / fi[2]);
+                Eigen::Vector2d residual(it_per_id.feature_per_frame[imu_i].point.x() - fi_projected[0],
+                                         it_per_id.feature_per_frame[imu_i].point.y() - fi_projected[1]);
+                // if (residual.norm() < 10.0 / 460)
+                {
+                    //this can also be adjust to improve performance
+                    double d = sqrt(fi[0] * fi[0] + fi[1] * fi[1] + fi[2] * fi[2]);
+                    sum_depth += fabs(f[2]);
+                    count++;
+                }
+            }
         }
+
+        if (sum_depth > 0)
+            it_per_id.estimated_depth = sum_depth / count;
     }
 }
 

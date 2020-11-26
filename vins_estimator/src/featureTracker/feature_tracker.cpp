@@ -47,16 +47,12 @@ void reduceVector(vector<int> &v, vector<uchar> status)
 
 float getDepth(cv::Mat img, int x, int y)
 {
-    cv::Mat depth_img = img;
-    if (depth_img.type() != CV_32F)
-        depth_img.convertTo(depth_img, CV_32F, 1.0);
-
     // 必须这么访问：cv::Mat.at<float>(row,col)
-    float depth = depth_img.at<float>(y, x);
+    float depth = img.at<float>(y, x);
     // printf("%d %d  %.3f\n", x, y, depth);
 
     // valid range: 0.4m~4m
-    if (depth > 4.0 || depth < 0.4 || isnan(depth) || isinf(depth))
+    if (depth > 3.0 || depth < 0.4 || isnan(depth) || isinf(depth))
         return -1.0;
 
     return depth;
@@ -278,7 +274,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> FeatureTracker::trackIm
     for (size_t i = 0; i < ids.size(); i++)
     {
         int feature_id = ids[i];
-        double x, y, z, depth;
+        double x, y, z;
         x = cur_un_pts[i].x;
         y = cur_un_pts[i].y;
         z = 1;
@@ -291,15 +287,27 @@ map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> FeatureTracker::trackIm
         velocity_x = pts_velocity[i].x;
         velocity_y = pts_velocity[i].y;
 
+        double depth = -1.0;
         if (!_img1.empty() && !stereo_cam)
-            depth = getDepth(_img1, x, y);
-        else
-            depth = -1.0;
+            depth = getDepth(_img1, p_u, p_v);
+#if 1
+        // 更新点的深度
+        if (depth > 0)
+        {
+            cv::circle(cur_img, cv::Point2f(p_u, p_v), 1, cv::Scalar(0, 0, 255), 1);
+            char text[10];
+            sprintf(text, "%.1f", depth);
+            cv::putText(cur_img, text, cv::Point2f(p_u, p_v), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255));
+        }
+#endif
 
         Eigen::Matrix<double, 8, 1> xyz_uv_velocity;
         xyz_uv_velocity << x, y, z, p_u, p_v, velocity_x, velocity_y, depth;
         featureFrame[feature_id].emplace_back(camera_id, xyz_uv_velocity);
     }
+
+    cv::imshow("123",cur_img);
+    cv::waitKey(1);
 
     if (!_img1.empty() && stereo_cam)
     {
