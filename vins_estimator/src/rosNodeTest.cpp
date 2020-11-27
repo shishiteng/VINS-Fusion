@@ -71,7 +71,7 @@ cv::Mat getDepthImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg)
 
     cv::Mat depth_img = ptr->image;
     if (depth_img.type() != CV_32F)
-        depth_img.convertTo(depth_img, CV_32F, 1.0);
+        depth_img.convertTo(depth_img, CV_32F, DEPTH_FACTOR);
 
     return depth_img.clone();
 }

@@ -212,7 +212,7 @@ Visualization Manager:
           Marker Topic: /vins_estimator/camera_pose_visual
           Name: CameraMarker
           Namespaces:
-            CameraPoseVisualization: true
+            {}
           Queue Size: 100
           Value: true
         - Alpha: 1
@@ -329,21 +329,25 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: true
-        body:
+        camera_accel_frame:
           Value: true
-        camera:
+        camera_accel_optical_frame:
+          Value: true
+        camera_aligned_depth_to_color_frame:
+          Value: true
+        camera_color_frame:
+          Value: true
+        camera_color_optical_frame:
           Value: true
         camera_depth_frame:
           Value: true
         camera_depth_optical_frame:
           Value: true
+        camera_gyro_frame:
+          Value: true
+        camera_imu_optical_frame:
+          Value: true
         camera_link:
-          Value: true
-        camera_rgb_frame:
-          Value: true
-        camera_rgb_optical_frame:
-          Value: true
-        world:
           Value: true
       Marker Scale: 1
       Name: TF
@@ -351,10 +355,7 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        world:
-          body:
-            camera:
-              {}
+        {}
       Update Interval: 0
       Value: true
   Enabled: true
@@ -383,16 +384,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 1.5275299549102783
+      Distance: 1.825718879699707
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.9355466365814209
-        Y: 0.894666314125061
-        Z: 0.38143399357795715
+        X: -0.34812280535697937
+        Y: 0.19048279523849487
+        Z: 0.3814343512058258
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false

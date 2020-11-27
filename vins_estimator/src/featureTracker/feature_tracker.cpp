@@ -52,7 +52,7 @@ float getDepth(cv::Mat img, int x, int y)
     // printf("%d %d  %.3f\n", x, y, depth);
 
     // valid range: 0.4m~4m
-    if (depth > 3.0 || depth < 0.4 || isnan(depth) || isinf(depth))
+    if (depth > 6.0 || depth < 0.3 || isnan(depth) || isinf(depth))
         return -1.0;
 
     return depth;

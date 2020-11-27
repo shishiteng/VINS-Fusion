@@ -46,6 +46,7 @@ int MIN_DIST;
 double F_THRESHOLD;
 int SHOW_TRACK;
 int FLOW_BACK;
+double DEPTH_FACTOR = 1.0;
 
 
 template <typename T>
@@ -91,6 +92,7 @@ void readParameters(std::string config_file)
     MULTIPLE_THREAD = fsSettings["multiple_thread"];
 
     DEPTH = fsSettings["depth"];
+    DEPTH_FACTOR = fsSettings["depth_factor"];
 
     USE_IMU = fsSettings["imu"];
     printf("USE_IMU: %d\n", USE_IMU);
