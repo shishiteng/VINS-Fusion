@@ -18,15 +18,15 @@ depth_factor: 0.001
    
 
 # Extrinsic parameter between IMU and Camera.
-estimate_extrinsic: 1   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
+estimate_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
                         # 1  Have an initial guess about extrinsic parameters. We will optimize around your initial guess.
 body_T_cam0: !!opencv-matrix
    rows: 4
    cols: 4
    dt: d
-   data: [  0,-1, 0, 0,
-           -1, 0, 0, 0,
-            0, 0,-1, 0,
+   data: [ -0.03480676, -0.99850158,  0.04222646,  0.046557, 
+           -0.99928778,  0.03538817,  0.01310024,  0.0045904,
+           -0.01457493, -0.04174041, -0.99902218, -0.0543177,
             0, 0, 0, 1]
 
 #Multiple thread support

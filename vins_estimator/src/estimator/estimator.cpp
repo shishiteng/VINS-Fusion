@@ -433,6 +433,29 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
     all_image_frame.insert(make_pair(header, imageframe));
     tmp_pre_integration = new IntegrationBase{acc_0, gyr_0, Bas[frame_count], Bgs[frame_count]};
 
+    // 静止状态检测，剔除静态outlier
+    if (frame_count > 1 && solver_flag != INITIAL)
+    {
+        Vector3d delta_p = Ps[frame_count] - Ps_prev;
+        Matrix3d delta_q = Rs[frame_count].inverse() * Rs_prev;
+        Quaterniond delta_Q(delta_q);
+        double delta_angle = acos(delta_Q.w()) * 2.0 * 57.3;
+        //double norm_vel = sqrt(pow(Vs[frame_count][0], 2) + pow(Vs[frame_count][1], 2) + pow(Vs[frame_count][2], 2));
+        double delta_pos = sqrt(pow(delta_p[0], 2) + pow(delta_p[1], 2) + pow(delta_p[2], 2));
+        //cout << " imu velocity:"<< Vs[frame_count].transpose() << " |" <<norm_vel<<"  |" <<norm_pos<<endl;
+        //fflush(stderr);
+        //fprintf(stderr,"  %.2fcm, %.2f°\n",delta_pos*100,delta_angle);
+        if (delta_pos < 0.001 && delta_angle < 0.05) // 1mm && 0.05度
+        {
+            ROS_DEBUG("robot is still,delta_pos=%.2fcm, delta_angle%.2f°", delta_pos * 100, delta_angle);
+            if (prev_points.size() > 0)
+                f_manager.removeStaticOutliers(prev_points, image);
+        }
+        Ps_prev = Ps[frame_count];
+        Rs_prev = Rs[frame_count];
+        prev_points = image;
+    }
+
     if (ESTIMATE_EXTRINSIC == 2)
     {
         ROS_INFO("calibrating extrinsic param, rotation movement is needed");
@@ -1184,10 +1207,21 @@ void Estimator::optimization()
     TicToc t_solver;
     ceres::Solver::Summary summary;
     ceres::Solve(options, &problem, &summary);
-    cout << summary.BriefReport() << endl;
-    // cout << summary.FullReport() << endl;
+
+    {
+        //solver状态记录
+        // cout << summary.BriefReport() << endl;
+        // cout << summary.FullReport() << endl;
+        ceres_summary.termination_type = summary.termination_type;
+        ceres_summary.solve_count++;
+        ceres_summary.cost = summary.total_time_in_seconds;
+        ceres_summary.report = summary.BriefReport();
+        if (summary.termination_type == ceres::CONVERGENCE)
+            ceres_summary.conv_count++;
+    }
+
     ROS_DEBUG("Iterations : %d", static_cast<int>(summary.iterations.size()));
-    printf("solver costs: %f \n", t_solver.toc());
+    // printf("solver costs: %f \n", t_solver.toc());
 
     double2vector();
     //printf("frame_count: %d \n", frame_count);

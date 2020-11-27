@@ -633,3 +633,56 @@ double FeatureManager::compensatedParallax2(const FeaturePerId &it_per_id, int f
 
     return ans;
 }
+
+void FeatureManager::removeStaticOutliers(map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> prev_points,
+                                          map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> curr_points)
+{
+    cv::Mat image(cv::Size(1280, 720), CV_8UC3, cv::Scalar(0, 0, 0));
+
+    double td = 0;
+    vector<int> outlier;
+    for (auto &id_pts : curr_points)
+    {
+        int feature_id = id_pts.first;
+        FeaturePerFrame f_per_fra(id_pts.second[0].second, td);
+
+        auto id_pts2 = prev_points.find(feature_id);
+        if (id_pts2 != prev_points.end())
+        {
+            vector<pair<int, Eigen::Matrix<double, 8, 1>>> pts = id_pts2->second;
+            FeaturePerFrame f_per_fra2(id_pts2->second[0].second, td);
+            double dx = fabs(f_per_fra.uv.x() - f_per_fra2.uv.x());
+            double dy = fabs(f_per_fra.uv.y() - f_per_fra2.uv.y());
+            // double d = hypot(f_per_fra.uv.x() - f_per_fra2.uv.x(), f_per_fra.uv.y() - f_per_fra2.uv.y());
+            //printf(" %d:%.2f,%.2f\n", feature_id, dx, dy);
+            if (dx + dy > 0.5)
+            {
+                outlier.push_back(feature_id);
+                cv::circle(image, cv::Point2f(f_per_fra.uv.x(), f_per_fra.uv.y()), 2, cv::Scalar(0, 0, 255), -1);
+            }
+            else
+            {
+                cv::circle(image, cv::Point2f(f_per_fra.uv.x(), f_per_fra.uv.y()), 2, cv::Scalar(0, 255, 0), -1);
+            }
+        }
+    }
+
+#if 0
+    cv::imshow("static_outlier", image);
+    cv::waitKey(1);
+#endif
+
+    for (auto &feature_id : outlier)
+    {
+        //printf(" static outlier: %d", feature_id);
+        auto it = find_if(feature.begin(), feature.end(), [feature_id](const FeaturePerId &it) {
+            return it.feature_id == feature_id;
+        });
+
+        if (it != feature.end())
+        {
+            feature.erase(it);
+            ROS_DEBUG("  remove static outlier:%d", feature_id);
+        }
+    }
+}

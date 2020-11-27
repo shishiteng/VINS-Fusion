@@ -8,7 +8,7 @@
  *******************************************************/
 
 #pragma once
- 
+
 #include <thread>
 #include <mutex>
 #include <std_msgs/Header.h>
@@ -36,10 +36,18 @@
 #include "../factor/projectionOneFrameTwoCamFactor.h"
 #include "../featureTracker/feature_tracker.h"
 
+typedef struct _solver_summary
+{
+    int termination_type;
+    int solve_count; //一共解算次数
+    int conv_count;  //收敛次数//当前收敛状态
+    double cost;     //耗时
+    string report;
+} solver_summary;
 
 class Estimator
 {
-  public:
+public:
     Estimator();
     ~Estimator();
     void setParameter();
@@ -66,15 +74,15 @@ class Estimator
     void vector2double();
     void double2vector();
     bool failureDetection();
-    bool getIMUInterval(double t0, double t1, vector<pair<double, Eigen::Vector3d>> &accVector, 
-                                              vector<pair<double, Eigen::Vector3d>> &gyrVector);
+    bool getIMUInterval(double t0, double t1, vector<pair<double, Eigen::Vector3d>> &accVector,
+                        vector<pair<double, Eigen::Vector3d>> &gyrVector);
     void getPoseInWorldFrame(Eigen::Matrix4d &T);
     void getPoseInWorldFrame(int index, Eigen::Matrix4d &T);
     void predictPtsInNextFrame();
     void outliersRejection(set<int> &removeIndex);
     double reprojectionError(Matrix3d &Ri, Vector3d &Pi, Matrix3d &rici, Vector3d &tici,
-                                     Matrix3d &Rj, Vector3d &Pj, Matrix3d &ricj, Vector3d &ticj, 
-                                     double depth, Vector3d &uvi, Vector3d &uvj);
+                             Matrix3d &Rj, Vector3d &Pj, Matrix3d &ricj, Vector3d &ticj,
+                             double depth, Vector3d &uvi, Vector3d &uvj);
     void updateLatestStates();
     void fastPredictIMU(double t, Eigen::Vector3d linear_acceleration, Eigen::Vector3d angular_velocity);
     bool IMUAvailable(double t);
@@ -97,7 +105,7 @@ class Estimator
     std::mutex mPropagate;
     queue<pair<double, Eigen::Vector3d>> accBuf;
     queue<pair<double, Eigen::Vector3d>> gyrBuf;
-    queue<pair<double, map<int, vector<pair<int, Eigen::Matrix<double, 8, 1> > > > > > featureBuf;
+    queue<pair<double, map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>>>> featureBuf;
     double prevTime, curTime;
     bool openExEstimation;
 
@@ -107,17 +115,17 @@ class Estimator
     FeatureTracker featureTracker;
 
     SolverFlag solver_flag;
-    MarginalizationFlag  marginalization_flag;
+    MarginalizationFlag marginalization_flag;
     Vector3d g;
 
     Matrix3d ric[2];
     Vector3d tic[2];
 
-    Vector3d        Ps[(WINDOW_SIZE + 1)];
-    Vector3d        Vs[(WINDOW_SIZE + 1)];
-    Matrix3d        Rs[(WINDOW_SIZE + 1)];
-    Vector3d        Bas[(WINDOW_SIZE + 1)];
-    Vector3d        Bgs[(WINDOW_SIZE + 1)];
+    Vector3d Ps[(WINDOW_SIZE + 1)];
+    Vector3d Vs[(WINDOW_SIZE + 1)];
+    Matrix3d Rs[(WINDOW_SIZE + 1)];
+    Vector3d Bas[(WINDOW_SIZE + 1)];
+    Vector3d Bgs[(WINDOW_SIZE + 1)];
     double td;
 
     Matrix3d back_R0, last_R, last_R0;
@@ -148,7 +156,6 @@ class Estimator
     vector<Vector3d> key_poses;
     double initial_timestamp;
 
-
     double para_Pose[WINDOW_SIZE + 1][SIZE_POSE];
     double para_SpeedBias[WINDOW_SIZE + 1][SIZE_SPEEDBIAS];
     double para_Feature[NUM_OF_F][SIZE_FEATURE];
@@ -174,4 +181,12 @@ class Estimator
 
     bool initFirstPoseFlag;
     bool initThreadFlag;
+
+    // ceres状态汇总
+    solver_summary ceres_summary;
+
+    // 用来剔除静态outlier
+    Vector3d Ps_prev;
+    Matrix3d Rs_prev;
+    map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> prev_points;
 };
