@@ -18,15 +18,15 @@ depth_factor: 0.001
    
 
 # Extrinsic parameter between IMU and Camera.
-estimate_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
+estimate_extrinsic: 1   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
                         # 1  Have an initial guess about extrinsic parameters. We will optimize around your initial guess.
 body_T_cam0: !!opencv-matrix
    rows: 4
    cols: 4
    dt: d
-   data: [ -0.03480676, -0.99850158,  0.04222646,  0.046557, 
-           -0.99928778,  0.03538817,  0.01310024,  0.0045904,
-           -0.01457493, -0.04174041, -0.99902218, -0.0543177,
+   data: [  1, 0, 0, 0,
+            0,-1, 0, 0.1,
+            0, 0,-1, 0,
             0, 0, 0, 1]
 
 #Multiple thread support
@@ -46,11 +46,11 @@ max_num_iterations: 8   # max solver itrations, to guarantee real time
 keyframe_parallax: 10.0 # keyframe selection threshold (pixel)
 
 #imu parameters       The more accurate parameters you provide, the better performance
-acc_n: 0.1          # accelerometer measurement noise standard deviation. 
-gyr_n: 0.01         # gyroscope measurement noise standard deviation.     
-acc_w: 0.001        # accelerometer bias random work noise standard deviation.  
-gyr_w: 0.0001       # gyroscope bias random work noise standard deviation.     
-g_norm: 9.81007     # gravity magnitude
+acc_n: 0.08           # accelerometer measurement noise standard deviation. 
+gyr_n: 0.0013         # gyroscope measurement noise standard deviation.     
+acc_w: 0.005          # accelerometer bias random work noise standard deviation.  
+gyr_w: 0.00006        # gyroscope bias random work noise standard deviation.     
+g_norm: 9.8           # gravity magnitude
 
 #unsynchronization parameters
 estimate_td: 1                      # online estimate time offset between camera and imu

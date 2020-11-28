@@ -38,3 +38,8 @@ add_executable(feature_enhancer_rgbd
     src/feature_enhancer_rgbd.cpp
 )
 target_link_libraries(feature_enhancer_rgbd ${catkin_LIBRARIES} ${OpenCV_LIBS})
+
+add_executable(depth_to_camera
+    src/depth_to_camera.cpp
+)
+target_link_libraries(depth_to_camera ${catkin_LIBRARIES} ${OpenCV_LIBS})

@@ -10,8 +10,8 @@ Panels:
         - /TF1
         - /TF1/Frames1
         - /TF1/Frames1/camera1
+        - /TF1/Frames1/camera1/Position1
         - /PointCloud21
-        - /PointCloud21/Status1
       Splitter Ratio: 0.4651159942150116
     Tree Height: 477
   - Class: rviz/Selection
@@ -369,8 +369,7 @@ Visualization Manager:
         world:
           body:
             camera:
-              camera_depth_optical_frame:
-                {}
+              {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -384,7 +383,7 @@ Visualization Manager:
       Class: rviz/PointCloud2
       Color: 255; 255; 255
       Color Transformer: RGB8
-      Decay Time: 100
+      Decay Time: 1
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
@@ -429,25 +428,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 5.099432468414307
+      Distance: 5.862561225891113
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.39153796434402466
-        Y: 0.11815116554498672
+        X: -0.08154133707284927
+        Y: -0.03442149609327316
         Z: 0.3814364969730377
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.0847963094711304
+      Pitch: 1.0547966957092285
       Target Frame: world
       Value: ThirdPersonFollower (rviz)
-      Yaw: 3.9637959003448486
+      Yaw: 4.688803195953369
     Saved: ~
 Window Geometry:
   Displays:
