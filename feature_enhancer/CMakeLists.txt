@@ -43,3 +43,8 @@ add_executable(depth_to_camera
     src/depth_to_camera.cpp
 )
 target_link_libraries(depth_to_camera ${catkin_LIBRARIES} ${OpenCV_LIBS})
+
+add_executable(mapping
+    src/mapping.cpp
+)
+target_link_libraries(mapping ${catkin_LIBRARIES} ${OpenCV_LIBS})
