@@ -24,27 +24,27 @@ body_T_cam0: !!opencv-matrix
    rows: 4
    cols: 4
    dt: d
-   data: [1, 0, 0, 0,
-          0, 1, 0, 0,
-          0, 0, 1, 0,
+   data: [0.99992325,  0.00930136,  0.00818451, -0.00591438,
+          0.00917658, -0.99984306,  0.01515436,  0.00450056,
+          0.00832418, -0.01507809, -0.99985167, -0.05169857,
           0, 0, 0, 1]
 
 body_T_cam1: !!opencv-matrix
    rows: 4
    cols: 4
    dt: d
-   data: [ 0.99992798, -0.00557572,  0.01062797,  0.07,
-           0.00554764,  0.99998105, -0.00266962,  0,
-          -0.01064266,  0.00261046,  0.99993996,  0,
-           0, 0, 0, 1]
+   data: [0.99981611,  0.00377582,  0.01880157,  0.06327092,
+          0.00344001, -0.99983456,  0.01786117,  0.00570725,
+          0.0188659,  -0.0177932,  -0.99966368, -0.05084876,
+          0, 0, 0, 1]
 
 #Multiple thread support
 multiple_thread: 1
 
 #feature traker paprameters
-max_cnt: 200            # max feature number in feature tracking
-min_dist: 30            # min distance between two features 
-freq: 10                # frequence (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequence will be same as raw image 
+max_cnt: 300            # max feature number in feature tracking
+min_dist: 25            # min distance between two features 
+freq: 20                # frequence (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequence will be same as raw image 
 F_threshold: 0.0        # ransac threshold (pixel)
 show_track: 1           # publish tracking image as topic
 flow_back: 1            # perform forward and backward optical flow to improve feature tracking accuracy
