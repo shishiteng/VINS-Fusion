@@ -7,7 +7,7 @@ num_of_cam: 1
 
 imu_topic: "/imu0"
 image0_topic: "/camera/rgb/image_raw"
-image1_topic: "/camera/depth/image"
+image1_topic: "/camera/depth_registered/image_raw"
 output_path: "~/output/"
 
 cam0_calib: "cam0_pinhole.yaml"

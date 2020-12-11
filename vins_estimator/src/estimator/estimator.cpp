@@ -1158,11 +1158,19 @@ void Estimator::optimization()
                 Vector3d pts_j = it_per_frame.point;
                 ProjectionTwoFrameOneCamFactor *f_td = new ProjectionTwoFrameOneCamFactor(pts_i, pts_j, it_per_id.feature_per_frame[0].velocity, it_per_frame.velocity,
                                                                                           it_per_id.feature_per_frame[0].cur_td, it_per_frame.cur_td);
-                problem.AddResidualBlock(f_td, loss_function, para_Pose[imu_i], para_Pose[imu_j], para_Ex_Pose[0], para_Feature[feature_index], para_Td[0]);
-                if (DEPTH && it_per_id.depth_flag)
+                if (DEPTH)
                 {
-                    n_const++;
-                    problem.SetParameterBlockConstant(para_Feature[feature_index]);
+                    // 如果有使用深度相机，只用有深度的点做优化
+                    if (it_per_id.depth_flag)
+                    {
+                        problem.AddResidualBlock(f_td, loss_function, para_Pose[imu_i], para_Pose[imu_j], para_Ex_Pose[0], para_Feature[feature_index], para_Td[0]);
+                        problem.SetParameterBlockConstant(para_Feature[feature_index]);
+                        n_const++;
+                    }
+                }
+                else
+                {
+                    problem.AddResidualBlock(f_td, loss_function, para_Pose[imu_i], para_Pose[imu_j], para_Ex_Pose[0], para_Feature[feature_index], para_Td[0]);
                 }
             }
 

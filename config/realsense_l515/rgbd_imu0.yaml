@@ -8,7 +8,7 @@ num_of_cam: 1
 imu_topic: "/imu0"
 image0_topic: "/camera/color/image_raw"
 image1_topic: "/camera/aligned_depth_to_color/image_raw"
-output_path: "~/output/"
+output_path: "/home/sst/output/"
 
 cam0_calib: "cam0_pinhole.yaml"
 image_width: 1280
@@ -18,23 +18,27 @@ depth_factor: 0.001
    
 
 # Extrinsic parameter between IMU and Camera.
-estimate_extrinsic: 1   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
+estimate_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
                         # 1  Have an initial guess about extrinsic parameters. We will optimize around your initial guess.
 body_T_cam0: !!opencv-matrix
    rows: 4
    cols: 4
    dt: d
-   data: [  1, 0, 0, 0,
-            0,-1, 0, 0.1,
-            0, 0,-1, 0,
-            0, 0, 0, 1]
+#    data: [  0.99981089, -0.00982983,  0.01677988, -0.01558439,
+#            -0.00945284, -0.99970439, -0.02240015,  0.11349451,
+#             0.01699511,  0.0222373,  -0.99960826, -0.01333165,
+#             0, 0, 0, 1]
+   data: [  0.999811, -0.009830, 0.016780, -0.016,
+           -0.009748, -0.999940, -0.004952, 0.1,
+            0.016828, 0.004788, -0.999847, -0.01,
+            0, 0, 0, 1 ]
 
 #Multiple thread support
 multiple_thread: 1
 
 #feature traker paprameters
-max_cnt: 400            # max feature number in feature tracking
-min_dist: 25            # min distance between two features 
+max_cnt: 300            # max feature number in feature tracking
+min_dist: 40            # min distance between two features 
 freq: 10                # frequence (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequence will be same as raw image 
 F_threshold: 1.0        # ransac threshold (pixel)
 show_track: 1           # publish tracking image as topic
@@ -54,9 +58,9 @@ g_norm: 9.8           # gravity magnitude
 
 #unsynchronization parameters
 estimate_td: 1                      # online estimate time offset between camera and imu
-td: 0.0                             # initial value of time offset. unit: s. readed image clock + td = real image clock (IMU clock)
+td: 0.03                             # initial value of time offset. unit: s. readed image clock + td = real image clock (IMU clock)
 
 #loop closure parameters
 load_previous_pose_graph: 0        # load and reuse previous pose graph; load from 'pose_graph_save_path'
-pose_graph_save_path: "~/output/pose_graph/" # save and load path
+pose_graph_save_path: "/home/sst/output/pose_graph/" # save and load path
 save_image: 1                   # save image in pose graph for visualization prupose; you can close this function by setting 0 

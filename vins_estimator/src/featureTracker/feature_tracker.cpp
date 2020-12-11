@@ -111,14 +111,14 @@ map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> FeatureTracker::trackIm
     row = cur_img.rows;
     col = cur_img.cols;
     cv::Mat rightImg = _img1;
-    /*
-    {
-        cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(3.0, cv::Size(8, 8));
-        clahe->apply(cur_img, cur_img);
-        if(!rightImg.empty())
-            clahe->apply(rightImg, rightImg);
-    }
-    */
+
+    // {
+    //     cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(3.0, cv::Size(8, 8));
+    //     clahe->apply(cur_img, cur_img);
+    //     // if(!rightImg.empty())
+    //     //     clahe->apply(rightImg, rightImg);
+    // }
+
     cur_pts.clear();
 
     if (prev_pts.size() > 0)
@@ -178,7 +178,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> FeatureTracker::trackIm
 
     if (1)
     {
-        //rejectWithF();
+        rejectWithF();
         ROS_DEBUG("set mask begins");
         TicToc t_m;
         setMask();
@@ -294,9 +294,12 @@ map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> FeatureTracker::trackIm
         // 更新点的深度
         if (depth > 0)
         {
+            Eigen::Vector3d point = Eigen::Vector3d(x, y, 1) * depth;
+            if (point.norm() > 5)
+                depth = -1;
             cv::circle(cur_img, cv::Point2f(p_u, p_v), 1, cv::Scalar(0, 0, 255), 1);
             char text[10];
-            sprintf(text, "%.1f", depth);
+            sprintf(text, "%.1f", point.norm());
             cv::putText(cur_img, text, cv::Point2f(p_u, p_v), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255));
         }
 #endif
@@ -306,7 +309,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> FeatureTracker::trackIm
         featureFrame[feature_id].emplace_back(camera_id, xyz_uv_velocity);
     }
 
-    cv::imshow("123",cur_img);
+    cv::imshow("123", cur_img);
     cv::waitKey(1);
 
     if (!_img1.empty() && stereo_cam)

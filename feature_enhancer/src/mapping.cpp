@@ -30,7 +30,7 @@ using namespace std;
 
 #define BUFFSIZE 128
 
-typedef pcl::PointXYZI PointT;
+typedef pcl::PointXYZRGBA PointT;
 typedef pcl::PointCloud<PointT> PointCloud;
 
 std::vector<PointCloud> point_cloud_buff_;
@@ -95,6 +95,10 @@ PointCloud image2Pointcloud(cv::Mat dep_img, cv::Mat rgb_img)
 
             Eigen::Vector4f pt_d(wx, wy, d, 1);
             Eigen::Vector4f pt_c = d2c_ * pt_d;
+            // 距离相机光心超过4米的点不要
+            Eigen::Vector3f pp(pt_c[0], pt_c[1], pt_c[2]);
+            if (pp.norm() > 4)
+                continue;
             points_cam_3d.push_back(cv::Point3f(pt_c[0], pt_c[1], pt_c[2]));
         }
     }
@@ -115,12 +119,18 @@ PointCloud image2Pointcloud(cv::Mat dep_img, cv::Mat rgb_img)
         // printf("%d: %.3f %.3f\n", i, pt.x, pt.y);
         if (x >= 0 && x < dep_img.cols && y >= 0 && y < dep_img.rows)
         {
-            unsigned char gray_value = rgb_img.at<unsigned char>(y, x);
+            unsigned char b = rgb_img.at<cv::Vec3b>(y, x)[0];
+            unsigned char g = rgb_img.at<cv::Vec3b>(y, x)[1];
+            unsigned char r = rgb_img.at<cv::Vec3b>(y, x)[2];
             PointT p;
             p.x = pt3d.x;
             p.y = pt3d.y;
             p.z = pt3d.z;
-            p.intensity = (float)gray_value;
+            p.r = r;
+            p.g = g;
+            p.b = b;
+            p.a = r;
+            // p.intensity = (float)gray_value;
             points_depth.points.push_back(p);
         }
     }
@@ -148,9 +158,9 @@ bool findPose(double timestamp, Eigen::Matrix4d &pose)
         {
             pose = PosestampedToEigen(posestamped);
             Eigen::Matrix4d c2i;
-            c2i << 0.99992325, 0.00930136, 0.00818451, -0.00591438,
-                0.00917658, -0.99984306, 0.01515436, 0.00450056,
-                0.00832418, -0.01507809, -0.99985167, -0.05169857,
+            c2i << 0.999811, -0.009830, 0.016780, -0.016,
+                -0.009748, -0.999940, -0.004952, 0.1,
+                0.016828, 0.004788, -0.999847, -0.01,
                 0, 0, 0, 1;
             pose = pose * c2i;
             return true;
@@ -193,7 +203,7 @@ void ImageCallback(const sensor_msgs::Image::ConstPtr &img_msg, const sensor_msg
     }
     else
     {
-        ptr = cv_bridge::toCvCopy(img_msg, sensor_msgs::image_encodings::MONO8);
+        ptr = cv_bridge::toCvCopy(img_msg, sensor_msgs::image_encodings::BGR8);
     }
     depth_ptr = cv_bridge::toCvCopy(depth_img_msg);
 
@@ -312,6 +322,7 @@ int main(int argc, char **argv)
         return -1;
     }
 
+#if 0
     // 导入相机内参数: 100t8
     double intrinsics[9] = {529.5672208220217, 0, 323.3005704161258,
                             0, 529.0072659619808, 212.2195288154228,
@@ -327,6 +338,17 @@ int main(int argc, char **argv)
         0.00134154, 0.0827772, 0.996567, 0.0216895,
         0, 0, 0, 1;
     d2c_ = c2d.inverse();
+#else
+    // 导入相机内参数: l515
+    double intrinsics[9] = {916.847681988938, 0, 642.7662987458908,
+                            0, 912.1358318789173, 314.66840566923156,
+                            0, 0, 1};
+    double dist_coeff[4] = {0.0967668820216863, -0.16546544143111575, -0.02037518991807661, -0.003245051269155387};
+    double depth_intrinsics[9] = {916.847681988938, 0, 642.7662987458908,
+                                  0, 912.1358318789173, 314.66840566923156,
+                                  0, 0, 1};
+    d2c_ = Eigen::Matrix4f::Identity();
+#endif
 
     cam_matrix_ = cv::Mat(3, 3, CV_64F, intrinsics);
     dist_coeff_ = cv::Mat(4, 1, CV_64F, dist_coeff);
@@ -345,8 +367,8 @@ int main(int argc, char **argv)
     map_octree_.reset(new pcl::octree::OctreePointCloudSearch<PointT>(0.02)); //octree_resolution:0.05
     map_octree_->setInputCloud(map_data_);
 
-    message_filters::Subscriber<sensor_msgs::Image> image_sub(nh, "/cam0/image_raw", 10);
-    message_filters::Subscriber<sensor_msgs::Image> depth_sub(nh, "/camera/depth/image_rect_raw", 10);
+    message_filters::Subscriber<sensor_msgs::Image> image_sub(nh, "/camera/color/image_raw", 10);
+    message_filters::Subscriber<sensor_msgs::Image> depth_sub(nh, "/camera/aligned_depth_to_color/image_raw", 10);
     typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> sync_pol;
     message_filters::Synchronizer<sync_pol> sync(sync_pol(10), image_sub, depth_sub);
     sync.registerCallback(boost::bind(&ImageCallback, _1, _2));
